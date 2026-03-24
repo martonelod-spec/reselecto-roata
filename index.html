@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ReSelecto — Roata Norocului</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+
+:root {
+  --red: #C0001A;
+  --dark: #1A1A1A;
+  --gray: #555;
+  --light: #F5F5F5;
+  --border: #E0E0E0;
+  --green: #1A7A40;
+}
+
+html,body {
+  width:100%; height:100%;
+  overflow:hidden;
+  background:#fff;
+  font-family:'Montserrat',sans-serif;
+}
+
+/* LAYOUT — landscape two columns */
+.page {
+  width:100vw; height:100vh;
+  display:grid;
+  grid-template-rows: auto 1fr;
+}
+
+/* HEADER */
+.hdr {
+  background:var(--red);
+  padding:10px 28px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  box-shadow:0 2px 12px rgba(192,0,26,0.25);
+}
+.logo {
+  font-size:clamp(18px,2.5vw,28px);
+  font-weight:900;
+  color:#fff;
+  letter-spacing:-0.5px;
+}
+.logo span { font-weight:300; }
+.hdr-right {
+  text-align:right;
+  color:rgba(255,255,255,0.8);
+  font-size:clamp(8px,1vw,12px);
+  font-weight:600;
+  letter-spacing:1px;
+}
+.hdr-right div {
+  color:rgba(255,255,255,0.55);
+  font-size:clamp(7px,0.8vw,10px);
+  margin-top:2px;
+}
+
+/* MAIN */
+.main {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  height:100%;
+  overflow:hidden;
+  padding:10px 16px;
+  gap:16px;
+}
+
+/* LEFT — wheel */
+.left {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:visible;
+  position:relative;
+}
+.wheel-wrap {
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:visible;
+}
+canvas { display:block; border-radius:50%; }
+.hub {
+  position:absolute;
+  border-radius:50%;
+  background:#fff;
+  border:4px solid var(--red);
+  box-shadow:0 0 0 3px rgba(192,0,26,0.15), 0 3px 10px rgba(0,0,0,0.15);
+  z-index:10;
+  display:flex; align-items:center; justify-content:center;
+  transition:transform 0.07s;
+}
+.hub-dot { width:42%; height:42%; border-radius:50%; background:var(--red); }
+.ptr {
+  position:absolute;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:20;
+  filter:drop-shadow(0 3px 6px rgba(192,0,26,0.5));
+}
+.ptr-tri {
+  width:0; height:0;
+  border-left:14px solid transparent;
+  border-right:14px solid transparent;
+  border-top:32px solid var(--red);
+  margin:0 auto;
+}
+.ptr-stem { width:6px; height:8px; background:var(--red); border-radius:0 0 3px 3px; margin:0 auto; }
+
+/* RIGHT — controls */
+.right {
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:10px;
+  padding-right:4px;
+}
+.promo-title {
+  font-size:clamp(16px,2.2vw,28px);
+  font-weight:900;
+  color:var(--dark);
+  line-height:1.15;
+}
+.promo-title span { color:var(--red); }
+.promo-sub {
+  font-size:clamp(10px,1.1vw,14px);
+  color:var(--gray);
+  line-height:1.5;
+}
+.promo-sub b { color:var(--dark); }
+
+/* Step labels */
+.step-row {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:clamp(10px,1.1vw,14px);
+  font-weight:700;
+  color:var(--dark);
+}
+.step-num {
+  width:clamp(22px,2.2vw,28px);
+  height:clamp(22px,2.2vw,28px);
+  border-radius:50%;
+  background:var(--red);
+  color:#fff;
+  font-size:clamp(11px,1.1vw,14px);
+  font-weight:900;
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0;
+}
+
+/* Bon input */
+.bon-input {
+  width:100%;
+  background:var(--light);
+  border:2px solid var(--border);
+  border-radius:8px;
+  font-family:'Montserrat',sans-serif;
+  font-size:clamp(14px,1.8vw,22px);
+  font-weight:700;
+  letter-spacing:4px;
+  text-align:center;
+  padding:9px 16px;
+  outline:none;
+  transition:all 0.2s;
+  text-transform:uppercase;
+}
+.bon-input:focus { border-color:var(--red); background:#fff; box-shadow:0 0 0 3px rgba(192,0,26,0.1); }
+
+/* Touch support */
+* { -webkit-tap-highlight-color: rgba(192,0,26,0.2); touch-action: manipulation; }
+input, button { touch-action: manipulation; -webkit-user-select: text; user-select: text; }
+.spin-btn { min-height: 56px; }
+.bon-input { min-height: 52px; font-size: clamp(16px,2vw,24px); }
+
+.bon-input::placeholder { color:#CCC; font-size:0.75em; letter-spacing:2px; }
+.bon-error { font-size:11px; color:var(--red); font-weight:600; height:14px; }
+
+/* Spin button */
+.spin-btn {
+  width:100%;
+  padding:clamp(12px,1.5vh,18px) 0;
+  font-family:'Montserrat',sans-serif;
+  font-size:clamp(12px,1.4vw,17px);
+  font-weight:800;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  color:#fff;
+  background:var(--red);
+  border:none;
+  border-radius:50px;
+  cursor:pointer;
+  transition:all 0.2s;
+  box-shadow:0 5px 20px rgba(192,0,26,0.3);
+}
+.spin-btn:hover:not(:disabled) { background:#E0001F; transform:translateY(-2px); }
+.spin-btn:disabled { background:#DDD; color:#AAA; cursor:not-allowed; box-shadow:none; transform:none; }
+
+/* Transparency bar */
+.tbar {
+  background:var(--light);
+  border:1px solid var(--border);
+  border-left:4px solid var(--red);
+  border-radius:6px;
+  padding:8px 12px;
+  font-size:clamp(8px,0.85vw,11px);
+  color:var(--gray);
+  line-height:1.5;
+}
+.tbar-top {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:3px;
+}
+.tbadge {
+  background:var(--red);
+  color:#fff;
+  font-size:clamp(7px,0.7vw,9px);
+  font-weight:700;
+  letter-spacing:1px;
+  padding:2px 7px;
+  border-radius:3px;
+  font-family:'Montserrat',sans-serif;
+  flex-shrink:0;
+}
+.tbar-odds { font-weight:700; color:var(--dark); font-size:clamp(8px,0.9vw,11px); }
+.tbar-odds b { color:var(--red); }
+.tseed {
+  font-family:'Courier New',monospace;
+  font-weight:700;
+  font-size:clamp(8px,0.9vw,11px);
+  color:var(--dark);
+  background:#fff;
+  border:1px solid var(--border);
+  padding:1px 6px;
+  border-radius:3px;
+}
+.tresult { font-weight:700; font-size:clamp(8px,0.9vw,11px); padding:1px 8px; border-radius:3px; }
+.tresult.wait { color:#AAA; }
+.tresult.win  { color:var(--green); background:rgba(27,122,64,0.1); }
+.tresult.lose { color:var(--gray);  background:rgba(0,0,0,0.05); }
+
+/* RESULT OVERLAY */
+#overlay {
+  position:fixed; inset:0; z-index:100;
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity 0.35s;
+  background:rgba(0,0,0,0.55);
+  backdrop-filter:blur(5px);
+}
+#overlay.show { opacity:1; pointer-events:all; }
+.rcard {
+  background:#fff;
+  border-radius:16px;
+  padding:clamp(28px,4vh,48px) clamp(32px,5vw,60px);
+  text-align:center;
+  max-width:560px; width:92%;
+  box-shadow:0 20px 60px rgba(0,0,0,0.2);
+  position:relative; overflow:hidden;
+  animation:pop 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes pop { from{transform:scale(0.65);opacity:0;} to{transform:scale(1);opacity:1;} }
+.rcard-bar { position:absolute; top:0; left:0; right:0; height:5px; }
+.ricon { font-size:clamp(44px,6vw,68px); display:block; margin-bottom:10px; }
+.rtitle { font-size:clamp(20px,2.8vw,36px); font-weight:900; color:var(--red); margin-bottom:4px; }
+.ramount { font-size:clamp(36px,5vw,64px); font-weight:900; color:var(--red); display:block; margin:4px 0 10px; }
+.rsub { font-size:clamp(11px,1.2vw,15px); color:var(--gray); line-height:1.7; margin-bottom:6px; }
+.rsub b { color:var(--dark); }
+.vbox {
+  display:inline-block;
+  margin:8px 0 6px;
+  padding:10px 22px;
+  background:#FFF5F5;
+  border:2px dashed var(--red);
+  border-radius:8px;
+  font-family:'Courier New',monospace;
+  font-size:clamp(14px,2vw,22px);
+  font-weight:900;
+  letter-spacing:5px;
+  color:#8B0013;
+}
+.rproof {
+  margin:10px 0 16px;
+  padding:8px 12px;
+  background:var(--light);
+  border:1px solid var(--border);
+  border-radius:6px;
+  font-family:'Courier New',monospace;
+  font-size:clamp(7px,0.75vw,10px);
+  color:#AAA;
+  line-height:1.6;
+  text-align:left;
+}
+.rproof b { color:var(--dark); }
+.rbtn {
+  font-family:'Montserrat',sans-serif;
+  font-size:clamp(10px,1.1vw,13px);
+  font-weight:700; letter-spacing:2px; text-transform:uppercase;
+  color:#fff; background:var(--red);
+  border:none; border-radius:50px;
+  padding:11px 30px; cursor:pointer; transition:all 0.2s;
+}
+.rbtn:hover { background:#E0001F; }
+
+/* CONFETTI */
+.cf {
+  position:fixed; pointer-events:none; z-index:200;
+  animation:cfall linear forwards;
+}
+@keyframes cfall { 0%{transform:translateY(-10px) rotate(0deg);opacity:1;} 100%{transform:translateY(105vh) rotate(540deg);opacity:0;} }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <div class="logo">Re<span>|</span>selecto</div>
+    <div class="hdr-right">
+      ROATA NOROCULUI
+      <div>Cumparaturi peste 2.000 lei &nbsp;·&nbsp; O rotire per bon &nbsp;·&nbsp; Weekend</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- LEFT: WHEEL -->
+    <div class="left">
+      <div class="wheel-wrap" id="ww">
+        <div class="ptr" id="ptr"><div class="ptr-tri"></div><div class="ptr-stem"></div></div>
+        <canvas id="cv"></canvas>
+        <div class="hub" id="hub"><div class="hub-dot"></div></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: CONTROLS -->
+    <div class="right">
+
+      <div>
+        <div class="promo-title">Cumperi peste <span>2.000 lei?</span></div>
+        <div class="promo-sub" style="margin-top:4px;">
+          Invartesti roata si poti castiga<br>
+          <b>1.000 lei voucher</b> — valabil 30 zile
+        </div>
+      </div>
+
+      <div>
+        <div class="step-row">
+          <div class="step-num">1</div>
+          Introdu numarul de pe bonul fiscal
+        </div>
+        <div style="margin-top:6px;">
+          <input class="bon-input" id="bon" type="text" maxlength="20"
+            placeholder="Nr. bon: ex. 00123456"
+            autocomplete="off" spellcheck="false"
+            oninput="onBon()" onkeydown="if(event.key==='Enter')tryGo()" ontouchstart="" />
+          <div class="bon-error" id="berr"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="step-row" style="margin-bottom:6px;">
+          <div class="step-num">2</div>
+          Apasa butonul si invarteste roata
+        </div>
+        <button class="spin-btn" id="sbtn" onclick="go()" ontouchstart="" disabled>
+          &#10022; &nbsp; INVARTE ROATA &nbsp; &#10022;
+        </button>
+      </div>
+
+      <!-- TRANSPARENCY BAR -->
+      <div class="tbar">
+        <div class="tbar-top">
+          <span class="tbadge">TRANSPARENT SI CORECT</span>
+          <span class="tbar-odds">Sansa: <b>1 din 6</b></span>
+          <span class="tresult wait" id="tres">Cod: <span id="tseed" style="font-family:'Courier New',monospace;">—</span></span>
+        </div>
+        <div style="font-size:clamp(7px,0.75vw,10px);color:#888;line-height:1.4;">
+          Rezultatul fiecarei rotiri este generat aleatoriu si verificabil de <b style="color:var(--dark);">ANPC</b> sau orice autoritate competenta.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- RESULT OVERLAY -->
+<div id="overlay">
+  <div class="rcard" id="rc">
+    <div class="rcard-bar" id="rbar"></div>
+    <span class="ricon" id="ricon"></span>
+    <div class="rtitle" id="rtitle"></div>
+    <span class="ramount" id="ramt"></span>
+    <div class="rsub" id="rsub"></div>
+    <div class="rproof" id="rproof"></div>
+    <button class="rbtn" onclick="closeR()">CONTINUA</button>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ─────────────────────────────────────────────
+var WIN = 1; // winning segment index
+var NUM = 6;
+var ARC = 360 / NUM;
+
+// Segment colors
+var SC = [
+  ['#E8E8E8','#D8D8D8'],  // 0 lose
+  ['#C0001A','#E0001F'],  // 1 WIN
+  ['#DEDEDE','#CECECE'],  // 2 lose
+  ['#E4E4E4','#D4D4D4'],  // 3 lose
+  ['#DADADA','#CACACA'],  // 4 lose
+  ['#E0E0E0','#D0D0D0'],  // 5 lose
+];
+
+var size=0, cv, ctx, angle=0, spinning=false, bon='';
+var lastSeed='', lastSlot=0, lastTs='';
+
+// ── TRANSPARENT RANDOM ─────────────────────────────────
+// Public algorithm: seed = timestamp_base36 + random_hex
+// slot = sum of char codes mod 6
+// Anyone can verify: if slot === WIN(1) => 1000 lei, else 100 lei
+function roll() {
+  var ts   = Date.now();
+  var rnd  = Math.floor(Math.random() * 0xFFFF);
+  var seed = ts.toString(36).toUpperCase() + '-' + rnd.toString(16).toUpperCase().padStart(4,'0');
+  var sum  = 0;
+  for (var i=0; i<seed.length; i++) sum += seed.charCodeAt(i);
+  var slot = sum % 6;
+  return { seed:seed, slot:slot, won:(slot===WIN) };
+}
+
+// ── SIZING ──────────────────────────────────────────────
+function getSize() {
+  var hh = (document.querySelector('.hdr')||{offsetHeight:56}).offsetHeight || 56;
+  var ah = window.innerHeight - hh - 28;
+  var aw = window.innerWidth * 0.46;
+  return Math.max(Math.floor(Math.min(ah, aw)), 160);
+}
+
+function setup() {
+  cv  = document.getElementById('cv');
+  ctx = cv.getContext('2d');
+  resize();
+  window.addEventListener('resize', resize);
+}
+
+function resize() {
+  size = getSize();
+  cv.width = cv.height = size;
+  cv.style.width = cv.style.height = size + 'px';
+
+  var sh = document.getElementById('ww');
+  if (sh) sh.style.overflow = 'visible';
+
+  var hub = document.getElementById('hub');
+  if (hub) {
+    var hs = Math.round(size * 0.13);
+    hub.style.width = hub.style.height = hs + 'px';
+  }
+
+  var ptr = document.getElementById('ptr');
+  if (ptr) ptr.style.top = 'calc(50% - ' + (Math.round(size/2) + 36) + 'px)';
+
+  draw(angle);
+}
+
+// ── DRAW ────────────────────────────────────────────────
+function draw(rot) {
+  if (!ctx) return;
+  var cx = size/2, cy = size/2, r = size/2 - 3;
+  ctx.clearRect(0, 0, size, size);
+
+  var base = rot - 90 - (WIN * ARC) - ARC/2;
+
+  for (var i=0; i<NUM; i++) {
+    var sa = (base + i*ARC) * Math.PI/180;
+    var ea = sa + ARC * Math.PI/180;
+    var ma = sa + ARC * Math.PI/180 / 2;
+    var c1 = SC[i][0], c2 = SC[i][1];
+
+    // Gradient fill
+    var grd = ctx.createLinearGradient(
+      cx + r*0.2*Math.cos(ma), cy + r*0.2*Math.sin(ma),
+      cx + r*Math.cos(ma),     cy + r*Math.sin(ma)
+    );
+    grd.addColorStop(0, c2);
+    grd.addColorStop(1, c1);
+
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,sa,ea);
+    ctx.closePath();
+    ctx.fillStyle = grd;
+    ctx.fill();
+
+    // Dividers
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,sa,ea);
+    ctx.closePath();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // Text
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(ma);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    if (i === WIN) {
+      ctx.fillStyle = '#fff';
+      ctx.shadowColor = 'rgba(0,0,0,0.2)';
+      ctx.shadowBlur  = 4;
+      ctx.font = 'bold ' + Math.floor(size*0.065) + 'px Montserrat,sans-serif';
+      ctx.fillText('1.000 LEI', r*0.54, -size*0.028);
+      ctx.font = '600 ' + Math.floor(size*0.032) + 'px Montserrat,sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.fillText('Voucher', r*0.54, size*0.026);
+    } else {
+      ctx.shadowColor = 'transparent';
+      ctx.fillStyle = '#888';
+      ctx.font = 'bold ' + Math.floor(size*0.038) + 'px Montserrat,sans-serif';
+      ctx.fillText('100 LEI', r*0.54, -size*0.018);
+      ctx.font = '500 ' + Math.floor(size*0.028) + 'px Montserrat,sans-serif';
+      ctx.fillStyle = '#AAA';
+      ctx.fillText('Voucher', r*0.54, size*0.018);
+    }
+    ctx.restore();
+  }
+
+  // Rim
+  ctx.beginPath();
+  ctx.arc(cx,cy,r,0,2*Math.PI);
+  ctx.strokeStyle = '#C0001A';
+  ctx.lineWidth = 6;
+  ctx.stroke();
+
+  // Hub circle
+  ctx.beginPath();
+  ctx.arc(cx,cy,r*0.075,0,2*Math.PI);
+  ctx.strokeStyle = '#C0001A';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+// ── BON INPUT ───────────────────────────────────────────
+function onBon() {
+  var inp = document.getElementById('bon');
+  var v = inp.value.toUpperCase().replace(/[^A-Z0-9\-]/g,'');
+  inp.value = v; bon = v;
+  var btn = document.getElementById('sbtn');
+  var err = document.getElementById('berr');
+  btn.disabled = v.length < 4;
+  err.textContent = (v.length > 0 && v.length < 4) ? 'Minim 4 caractere' : '';
+}
+function tryGo() { if (!document.getElementById('sbtn').disabled) go(); }
+
+// ── SPIN ────────────────────────────────────────────────
+function go() {
+  if (spinning) return;
+  spinning = true;
+  document.getElementById('sbtn').disabled = true;
+  document.getElementById('bon').disabled  = true;
+
+  var r = roll();
+  lastSeed = r.seed; lastSlot = r.slot;
+  lastTs   = getTs();
+
+  // Show seed immediately
+  document.getElementById('tseed').textContent = r.seed;
+  document.getElementById('tres').className = 'tresult wait';
+
+  // Target angle so segment CENTER lands under pointer (top)
+  // draw() uses: base = rot - 90 - WIN*ARC - ARC/2
+  // segment i center is at: base + i*ARC + ARC/2 = rot - 90 - WIN*ARC - ARC/2 + i*ARC + ARC/2
+  // We want that = -90 (pointer at top)
+  // => rot = WIN*ARC - i*ARC + WIN*ARC + ARC/2 - ARC/2 ... simplified:
+  // => rot = (WIN - i) * ARC ... but let's just compute directly:
+  // current base at angle=0: segment i center = -90 - WIN*ARC - ARC/2 + i*ARC + ARC/2 = -90 + (i-WIN)*ARC
+  // we want pointer (-90) to align with segment center
+  // so we need to rotate by: WIN*ARC - i*ARC = (WIN-i)*ARC  (plus multiples of 360)
+  var seg = r.slot;
+  var target = ((WIN - seg) * ARC % 360 + 360) % 360;
+  var current = ((angle % 360) + 360) % 360;
+  var delta = (target - current + 360) % 360;
+  if (delta < 10) delta += 360; // ensure meaningful spin
+  var total = delta + (7 + Math.floor(Math.random()*4)) * 360;
+
+  var dur = 5200 + Math.random()*1400;
+  var t0  = performance.now();
+  var a0  = angle;
+  var lastS = -1;
+
+  function ease(t) {
+    if (t < 0.35) return t*t*2.6;
+    var t2 = (t-0.35)/0.65;
+    return 0.32 + (1 - Math.pow(1-t2, 3.5)) * 0.68;
+  }
+
+  function frame(now) {
+    var p = Math.min((now-t0)/dur, 1);
+    angle = a0 + total * ease(p);
+
+    var sn = Math.floor(((angle%360)+360)%360 / ARC);
+    if (sn !== lastS) {
+      lastS = sn;
+      var h = document.getElementById('hub');
+      if (h) { h.style.transform='scale(1.18)'; setTimeout(function(){h.style.transform='scale(1)';},70); }
+    }
+
+    draw(angle);
+    if (p < 1) { requestAnimationFrame(frame); return; }
+
+    angle = a0 + total;
+    draw(angle);
+
+    var tr = document.getElementById('tres');
+    if (r.won) {
+      tr.className = 'tresult win';
+      tr.innerHTML = 'Castigat &nbsp;|&nbsp; Cod: <span style="font-family:Courier New,monospace;font-weight:700;">' + r.seed + '</span>';
+    } else {
+      tr.className = 'tresult lose';
+      tr.innerHTML = 'Slot ' + (r.slot+1) + '/6 &nbsp;|&nbsp; Cod: <span style="font-family:Courier New,monospace;">' + r.seed + '</span>';
+    }
+
+    setTimeout(function(){ showResult(r); }, 600);
+  }
+  requestAnimationFrame(frame);
+}
+
+// ── RESULT ──────────────────────────────────────────────
+function showResult(r) {
+  var code = makeCode(bon);
+  var icon = document.getElementById('ricon');
+  var title= document.getElementById('rtitle');
+  var amt  = document.getElementById('ramt');
+  var sub  = document.getElementById('rsub');
+  var proof= document.getElementById('rproof');
+  var bar  = document.getElementById('rbar');
+
+  proof.innerHTML =
+    '<b>Verificare transparenta:</b><br>' +
+    'Cod rotire: <b>' + r.seed + '</b><br>' +
+    'Slot calculat: <b>' + (r.slot+1) + ' din 6</b> &nbsp;|&nbsp; Slot castigator: <b>' + (WIN+1) + '</b><br>' +
+    'Bon: <b>' + bon + '</b> &nbsp;|&nbsp; Data: <b>' + lastTs + '</b><br>' +
+    '<span style="color:#BBB;font-size:0.9em;">Algoritmul este public. Poate fi verificat de ANPC sau orice autoritate competenta.</span>';
+
+  if (r.won) {
+    bar.style.background  = '#C0001A';
+    icon.innerHTML        = '&#127942;';
+    title.textContent     = 'FELICITARI!';
+    amt.style.display     = 'block';
+    amt.textContent       = '1.000 LEI';
+    sub.innerHTML =
+      'Ai castigat un <b>VOUCHER de 1.000 LEI!</b><br>' +
+      'Valabil <b>30 de zile</b> &nbsp;&#183;&nbsp; Fara suma minima<br><br>' +
+      '<div class="vbox">' + code + '</div><br>' +
+      '<span style="font-size:0.85em;color:#AAA;">Bon: ' + bon + ' &nbsp;&#183;&nbsp; ' + lastTs + '</span>';
+    confetti(['#C0001A','#FF5555','#FFF','#FFD0D0']);
+  } else {
+    bar.style.background  = '#1A7A40';
+    icon.innerHTML        = '&#127873;';
+    title.style.color     = '#1A7A40';
+    title.textContent     = 'TOT CASTIGI!';
+    amt.style.display     = 'none';
+    sub.innerHTML =
+      'Ai castigat un <b>VOUCHER de 100 LEI!</b><br>' +
+      'Valabil <b>7 zile</b> &nbsp;&#183;&nbsp; Fara suma minima<br><br>' +
+      '<div class="vbox" style="border-color:#1A7A40;color:#0A5E2A;background:#F0FFF5;">' + code + '</div><br>' +
+      '<span style="font-size:0.85em;color:#AAA;">Bon: ' + bon + ' &nbsp;&#183;&nbsp; ' + lastTs + '</span>';
+    confetti(['#C0001A','#1A7A40','#FFF','#FFD166','#3498DB']);
+  }
+
+  document.getElementById('overlay').classList.add('show');
+}
+
+function closeR() {
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('rtitle').style.color = '#C0001A';
+  spinning = false;
+  var b = document.getElementById('bon');
+  b.disabled=false; b.value=''; b.focus();
+  bon='';
+  document.getElementById('berr').textContent='';
+  document.getElementById('sbtn').disabled=true;
+  document.getElementById('tseed').textContent='—';
+  document.getElementById('tres').className='tresult wait';
+  document.getElementById('tres').innerHTML='Cod: <span id="tseed" style="font-family:Courier New,monospace;">—</span>';
+}
+
+// ── HELPERS ─────────────────────────────────────────────
+function makeCode(b) {
+  var n=new Date();
+  var yy=String(n.getFullYear()).slice(-2);
+  var mm=String(n.getMonth()+1).padStart(2,'0');
+  var dd=String(n.getDate()).padStart(2,'0');
+  var ch='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  var rand='';
+  for(var i=0;i<4;i++) rand+=ch[Math.floor(Math.random()*ch.length)];
+  return 'RS-'+yy+mm+dd+'-'+(b||'GUEST').slice(-6)+'-'+rand;
+}
+
+function getTs() {
+  var n=new Date();
+  return [n.getDate(),n.getMonth()+1,n.getFullYear()]
+    .map(function(x,i){return i<2?String(x).padStart(2,'0'):x;}).join('.')+
+    ' '+[n.getHours(),n.getMinutes()].map(function(x){return String(x).padStart(2,'0');}).join(':');
+}
+
+function confetti(cols) {
+  for(var i=0;i<80;i++) (function(i){
+    setTimeout(function(){
+      var el=document.createElement('div');
+      el.className='cf';
+      el.style.cssText='left:'+Math.random()*100+'vw;top:-12px;'+
+        'width:'+(6+Math.random()*8)+'px;height:'+(6+Math.random()*8)+'px;'+
+        'background:'+cols[Math.floor(Math.random()*cols.length)]+';'+
+        'border-radius:'+(Math.random()>.5?'50%':'2px')+';'+
+        'animation-duration:'+(2.5+Math.random()*2.5)+'s';
+      document.body.appendChild(el);
+      setTimeout(function(){el.remove();},5500);
+    },i*22);
+  })(i);
+}
+
+setup();
+</script>
+</body>
+</html>
