@@ -687,18 +687,34 @@ function showResult(r) {
   document.getElementById('overlay').classList.add('show');
 }
 
-function closeR() {
+function resetGame() {
+  spinning = false;
+  bon = '';
+  lastSeed = '';
+  lastSlot = 0;
+  lastTs = '';
+
   document.getElementById('overlay').classList.remove('show');
   document.getElementById('rtitle').style.color = '#C0001A';
-  spinning = false;
+
   var b = document.getElementById('bon');
-  b.disabled=false; b.value=''; b.focus();
-  bon='';
-  document.getElementById('berr').textContent='';
-  document.getElementById('sbtn').disabled=true;
-  document.getElementById('tseed').textContent='—';
-  document.getElementById('tres').className='tresult wait';
-  document.getElementById('tres').innerHTML='Cod: <span id="tseed" style="font-family:Courier New,monospace;">—</span>';
+  b.disabled = false;
+  b.value = '';
+  b.focus();
+
+  document.getElementById('berr').textContent = '';
+  document.getElementById('sbtn').disabled = true;
+
+  var tres = document.getElementById('tres');
+  tres.className = 'tresult wait';
+  tres.innerHTML = 'Cod: <span id="tseed" style="font-family:Courier New,monospace;">—</span>';
+
+  angle = 0;
+  draw(angle);
+}
+
+function closeR() {
+  resetGame();
 }
 
 // ── HELPERS ─────────────────────────────────────────────
